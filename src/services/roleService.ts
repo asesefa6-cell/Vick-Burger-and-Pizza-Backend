@@ -1,0 +1,33 @@
+﻿import { models } from '../db';
+import { Role, RoleCreationAttributes, RoleAttributes } from '../models/Role';
+
+// Example usage:
+// const role = await createRole({ roleName: 'Admin', description: 'Business manager' });
+
+export const createRole = async (
+  payload: RoleCreationAttributes
+): Promise<Role> => {
+  return await models.Role.create(payload);
+};
+
+export const findAllRoles = async (): Promise<Role[]> => {
+  return await models.Role.findAll();
+};
+
+export const findRoleById = async (id: number): Promise<Role | null> => {
+  return await models.Role.findByPk(id);
+};
+
+export const updateRole = async (
+  id: number,
+  updates: Partial<RoleAttributes>
+): Promise<Role | null> => {
+  const role = await models.Role.findByPk(id);
+  if (!role) return null;
+  return await role.update(updates);
+};
+
+export const deleteRole = async (id: number): Promise<boolean> => {
+  const deletedCount = await models.Role.destroy({ where: { id } });
+  return deletedCount > 0;
+};
