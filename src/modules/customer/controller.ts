@@ -169,7 +169,8 @@ export const verifyChapaPaymentHandler = async (
       return;
     }
     const txRefParam = req.query.tx_ref;
-    const txRef = Array.isArray(txRefParam) ? txRefParam[0] : txRefParam;
+    const txRefValue = Array.isArray(txRefParam) ? txRefParam[0] : txRefParam;
+    const txRef = typeof txRefValue === 'string' ? txRefValue : undefined;
     if (!txRef) {
       res.status(400).json({ success: false, message: 'Invalid tx_ref' });
       return;
