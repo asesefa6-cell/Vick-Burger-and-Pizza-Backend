@@ -22,7 +22,7 @@ export const completeTableVisitHandler = async (req: Request, res: Response, nex
       res.status(401).json({ success: false, message: 'Unauthorized' });
       return;
     }
-    const tableId = req.params.tableId;
+    const tableId = Array.isArray(req.params.tableId) ? req.params.tableId[0] : req.params.tableId;
     if (!tableId) {
       res.status(400).json({ success: false, message: 'Invalid table id' });
       return;

@@ -73,7 +73,7 @@ export const getConsolidatedSales = async (query: ConsolidatedQuery): Promise<Co
     businessWhere.id = query.businessId;
   }
 
-  const rows = await models.Order.findAll({
+  const rows = (await models.Order.findAll({
     attributes: [
       [col('table.business.business_id'), 'businessId'],
       [col('table.business.business_name'), 'businessName'],
@@ -100,7 +100,7 @@ export const getConsolidatedSales = async (query: ConsolidatedQuery): Promise<Co
     ],
     group: ['table.business.business_id', 'table.business.business_name'],
     raw: true,
-  });
+  })) as unknown as Array<{ businessId?: string; businessName?: string; totalOrders?: number | string; totalRevenue?: number | string }>;
 
   const businesses: BusinessBreakdown[] = rows.map((row) => ({
     businessId: String(row.businessId),
@@ -135,7 +135,7 @@ export const getSalesSeries = async (query: ConsolidatedQuery): Promise<SalesPoi
     businessWhere.id = query.businessId;
   }
 
-  const rows = await models.Order.findAll({
+  const rows = (await models.Order.findAll({
     attributes: [
       [fn('date_trunc', 'day', col('Order.created_at')), 'bucket'],
       [fn('coalesce', fn('sum', col('Order.total_amount')), 0), 'totalRevenue'],
@@ -159,10 +159,10 @@ export const getSalesSeries = async (query: ConsolidatedQuery): Promise<SalesPoi
         ],
       },
     ],
-    group: [literal('bucket')],
-    order: [literal('bucket ASC')],
+    group: [literal('bucket') as any],
+    order: [literal('bucket ASC') as any],
     raw: true,
-  });
+  })) as unknown as Array<{ bucket?: string; totalRevenue?: number | string; totalOrders?: number | string }>;
 
   return rows.map((row) => ({
     date: new Date(String(row.bucket)).toISOString().slice(0, 10),

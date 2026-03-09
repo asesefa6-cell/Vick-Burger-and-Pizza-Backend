@@ -65,7 +65,7 @@ export const listBusinesses = async (query: ListQuery = {}): Promise<Business[]>
 };
 
 export const updateBusiness = async (
-  id: number,
+  id: string,
   updates: Partial<BusinessAttributes>
 ): Promise<Business | null> => {
   const { chapaSecretKey, chapaPublicKey, ...rest } = updates as any;
@@ -95,7 +95,7 @@ export const updateBusiness = async (
   return updated;
 };
 
-export const deleteBusiness = async (id: number): Promise<boolean> => {
+export const deleteBusiness = async (id: string): Promise<boolean> => {
   const deletedCount = await models.Business.destroy({ where: { id } });
   return deletedCount > 0;
 };

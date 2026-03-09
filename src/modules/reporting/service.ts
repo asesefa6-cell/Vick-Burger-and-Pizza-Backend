@@ -73,7 +73,7 @@ export const getSalesSummary = async (query: SalesReportQuery & { businessId?: s
     ? { paymentMethod: query.paymentMethod }
     : undefined;
 
-  const orderAggregate = await models.Order.findOne({
+  const orderAggregate = (await models.Order.findOne({
     attributes: [
       [fn('count', col('Order.order_id')), 'totalOrders'],
       [fn('coalesce', fn('sum', col('Order.total_amount')), 0), 'totalRevenue'],
@@ -86,14 +86,14 @@ export const getSalesSummary = async (query: SalesReportQuery & { businessId?: s
       ...businessInclude(query.businessId),
     ],
     raw: true,
-  });
+  })) as unknown as { totalOrders?: number | string; totalRevenue?: number | string } | null;
 
   const categoryWhere: Record<string, unknown> = {};
   if (query.categoryId) {
     categoryWhere.id = query.categoryId;
   }
 
-  const categoryRows = await models.OrderItem.findAll({
+  const categoryRows = (await models.OrderItem.findAll({
     attributes: [
       [col('menuItem.category.category_id'), 'categoryId'],
       [col('menuItem.category.category_name'), 'categoryName'],
@@ -132,7 +132,7 @@ export const getSalesSummary = async (query: SalesReportQuery & { businessId?: s
     ],
     group: ['menuItem.category.category_id', 'menuItem.category.category_name'],
     raw: true,
-  });
+  })) as unknown as Array<{ categoryId?: string; categoryName?: string; totalQuantity?: number | string; totalRevenue?: number | string }>;
 
   const totalOrders = Number(orderAggregate?.totalOrders || 0);
   const totalRevenue = String(orderAggregate?.totalRevenue || '0');
@@ -161,7 +161,7 @@ export const getOrderAnalytics = async (query: AnalyticsQuery & { businessId?: s
     createdAt: { [Op.between]: [start, end] },
   };
 
-  const orderAggregate = await models.Order.findOne({
+  const orderAggregate = (await models.Order.findOne({
     attributes: [
       [fn('count', col('Order.order_id')), 'totalOrders'],
       [fn('coalesce', fn('avg', col('Order.total_amount')), 0), 'averageOrderValue'],
@@ -169,9 +169,9 @@ export const getOrderAnalytics = async (query: AnalyticsQuery & { businessId?: s
     where: orderWhere,
     include: [...businessInclude(query.businessId)],
     raw: true,
-  });
+  })) as unknown as { totalOrders?: number | string; averageOrderValue?: number | string } | null;
 
-  const itemRows = await models.OrderItem.findAll({
+  const itemRows = (await models.OrderItem.findAll({
     attributes: [
       [col('menuItem.item_id'), 'itemId'],
       [col('menuItem.item_name'), 'itemName'],
@@ -198,7 +198,7 @@ export const getOrderAnalytics = async (query: AnalyticsQuery & { businessId?: s
     order: [[fn('sum', col('OrderItem.quantity')), 'DESC']],
     limit: 10,
     raw: true,
-  });
+  })) as unknown as Array<{ itemId?: string; itemName?: string; totalQuantity?: number | string; totalRevenue?: number | string }>;
 
   const topItems: TopItem[] = itemRows.map((row) => ({
     itemId: String(row.itemId),

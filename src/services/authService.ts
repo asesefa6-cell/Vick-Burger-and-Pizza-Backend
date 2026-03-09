@@ -108,19 +108,31 @@ export const loginUser = async (
     if (row) business = { id: row.id, businessName: row.businessName };
   }
 
+  const userPayload: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    businessId?: string | null;
+    businessIds?: string[];
+    businesses?: { id: string; businessName: string }[];
+    business?: { id: string; businessName: string } | null;
+    profileFileId?: string | null;
+  } = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: roleName,
+    businessId: resolvedBusinessId ?? null,
+    business: business ?? null,
+    profileFileId: user.profileFileId ?? null,
+  };
+  if (businessIds !== undefined) userPayload.businessIds = businessIds;
+  if (businesses !== undefined) userPayload.businesses = businesses;
+
   return {
     token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: roleName,
-      businessId: resolvedBusinessId ?? null,
-      businessIds,
-      businesses,
-      business,
-      profileFileId: user.profileFileId ?? null,
-    },
+    user: userPayload,
   };
 };
 
@@ -151,17 +163,29 @@ export const getMe = async (
     if (row) business = { id: row.id, businessName: row.businessName };
   }
 
-  return {
+  const payload: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    businessId?: string | null;
+    businessIds?: string[];
+    businesses?: { id: string; businessName: string }[];
+    business?: { id: string; businessName: string } | null;
+    profileFileId?: string | null;
+  } = {
     id: user.id,
     name: user.name,
     email: user.email,
     role: roleName,
     businessId: resolvedBusinessId ?? null,
-    businessIds,
-    businesses,
-    business,
+    business: business ?? null,
     profileFileId: user.profileFileId ?? null,
   };
+  if (businessIds !== undefined) payload.businessIds = businessIds;
+  if (businesses !== undefined) payload.businesses = businesses;
+
+  return payload;
 };
 
 export const updateMe = async (
