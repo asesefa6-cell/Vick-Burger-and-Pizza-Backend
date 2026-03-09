@@ -42,7 +42,7 @@ export const getDailyReport = async (businessId: string): Promise<DailyReport> =
     createdAt: { [Op.between]: [start, end] },
   };
 
-  const totalRow = await models.Order.findOne({
+  const totalRow = (await models.Order.findOne({
     attributes: [
       [fn('count', col('Order.id')), 'totalOrders'],
       [fn('coalesce', fn('sum', col('Order.totalAmount')), 0), 'totalRevenue'],
@@ -58,9 +58,9 @@ export const getDailyReport = async (businessId: string): Promise<DailyReport> =
       },
     ],
     raw: true,
-  });
+  })) as unknown as { totalOrders?: number | string; totalRevenue?: number | string } | null;
 
-  const ordersPerTableRows = await models.Order.findAll({
+  const ordersPerTableRows = (await models.Order.findAll({
     attributes: [
       [col('table.id'), 'tableId'],
       [col('table.tableNumber'), 'tableNumber'],
@@ -80,7 +80,7 @@ export const getDailyReport = async (businessId: string): Promise<DailyReport> =
     group: ['table.id', 'table.tableNumber'],
     order: [[fn('count', col('Order.id')), 'DESC']],
     raw: true,
-  });
+  })) as unknown as Array<{ tableId?: string; tableNumber?: string; totalOrders?: number | string; totalRevenue?: number | string }>;
 
   const ordersPerTable: OrdersPerTable[] = ordersPerTableRows.map((row) => ({
     tableId: String(row.tableId),
@@ -89,7 +89,7 @@ export const getDailyReport = async (businessId: string): Promise<DailyReport> =
     totalRevenue: String(row.totalRevenue || '0'),
   }));
 
-  const topItemsRows = await models.OrderItem.findAll({
+  const topItemsRows = (await models.OrderItem.findAll({
     attributes: [
       [col('menuItem.id'), 'itemId'],
       [col('menuItem.itemName'), 'itemName'],
@@ -127,7 +127,7 @@ export const getDailyReport = async (businessId: string): Promise<DailyReport> =
     order: [[fn('sum', col('OrderItem.quantity')), 'DESC']],
     limit: 10,
     raw: true,
-  });
+  })) as unknown as Array<{ itemId?: string; itemName?: string; totalQuantity?: number | string; totalRevenue?: number | string }>;
 
   const topItems: TopSellingItem[] = topItemsRows.map((row) => ({
     itemId: String(row.itemId),
@@ -173,7 +173,7 @@ export const getWeeklyOrMonthlyReport = async (
     createdAt: { [Op.between]: [start, end] },
   };
 
-  const totalRow = await models.Order.findOne({
+  const totalRow = (await models.Order.findOne({
     attributes: [
       [fn('count', col('Order.id')), 'totalOrders'],
       [fn('coalesce', fn('sum', col('Order.totalAmount')), 0), 'totalRevenue'],
@@ -189,9 +189,9 @@ export const getWeeklyOrMonthlyReport = async (
       },
     ],
     raw: true,
-  });
+  })) as unknown as { totalOrders?: number | string; totalRevenue?: number | string } | null;
 
-  const trendRows = await models.Order.findAll({
+  const trendRows = (await models.Order.findAll({
     attributes: [
       [literal("date_trunc('day', \"Order\".\"created_at\")"), 'period'],
       [fn('count', col('Order.id')), 'totalOrders'],
@@ -207,10 +207,10 @@ export const getWeeklyOrMonthlyReport = async (
         required: true,
       },
     ],
-    group: [literal("date_trunc('day', \"Order\".\"created_at\")")],
-    order: [[literal("date_trunc('day', \"Order\".\"created_at\")"), 'ASC']],
+    group: [literal("date_trunc('day', \"Order\".\"created_at\")") as any],
+    order: [[literal("date_trunc('day', \"Order\".\"created_at\")") as any, 'ASC']],
     raw: true,
-  });
+  })) as unknown as Array<{ period?: string; totalOrders?: number | string; totalRevenue?: number | string }>;
 
   const trends: TrendPoint[] = trendRows.map((row) => ({
     period: String(row.period),
@@ -218,7 +218,7 @@ export const getWeeklyOrMonthlyReport = async (
     totalRevenue: String(row.totalRevenue || '0'),
   }));
 
-  const topItemsRows = await models.OrderItem.findAll({
+  const topItemsRows = (await models.OrderItem.findAll({
     attributes: [
       [col('menuItem.id'), 'itemId'],
       [col('menuItem.itemName'), 'itemName'],
@@ -256,7 +256,7 @@ export const getWeeklyOrMonthlyReport = async (
     order: [[fn('sum', col('OrderItem.quantity')), 'DESC']],
     limit: 10,
     raw: true,
-  });
+  })) as unknown as Array<{ itemId?: string; itemName?: string; totalQuantity?: number | string; totalRevenue?: number | string }>;
 
   const topItems: TopSellingItem[] = topItemsRows.map((row) => ({
     itemId: String(row.itemId),
@@ -324,7 +324,7 @@ export const getOrderStatusSummary = async (businessId: string): Promise<OrderSt
 };
 
 export const getBusinessPerformance = async (businessId: string): Promise<BusinessPerformance> => {
-  const totalRow = await models.Order.findOne({
+  const totalRow = (await models.Order.findOne({
     attributes: [
       [fn('count', col('Order.id')), 'totalOrders'],
       [fn('coalesce', fn('sum', col('Order.totalAmount')), 0), 'totalRevenue'],
@@ -339,9 +339,9 @@ export const getBusinessPerformance = async (businessId: string): Promise<Busine
       },
     ],
     raw: true,
-  });
+  })) as unknown as { totalOrders?: number | string; totalRevenue?: number | string } | null;
 
-  const perTableRows = await models.Order.findAll({
+  const perTableRows = (await models.Order.findAll({
     attributes: [
       [col('table.id'), 'tableId'],
       [col('table.tableNumber'), 'tableNumber'],
@@ -358,7 +358,7 @@ export const getBusinessPerformance = async (businessId: string): Promise<Busine
     ],
     group: ['table.id', 'table.tableNumber'],
     raw: true,
-  });
+  })) as unknown as Array<{ tableId?: string; tableNumber?: string; totalOrders?: number | string }>;
 
   const totalOrders = Number(totalRow?.totalOrders || 0);
 

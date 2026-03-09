@@ -33,7 +33,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.get('/uploads/:id', async (req: Request, res: Response) => {
   try {
-    const file = await models.File.findByPk(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+      res.status(400).json({ success: false, message: 'Invalid file id' });
+      return;
+    }
+    const file = await models.File.findByPk(id);
     if (!file) {
       res.status(404).json({ success: false, message: 'File not found' });
       return;

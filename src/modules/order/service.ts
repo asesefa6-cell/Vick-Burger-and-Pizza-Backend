@@ -91,7 +91,7 @@ export const placeOrder = async (input: PlaceOrderInput): Promise<Order> => {
       businessId: result.businessId,
       totalAmount: result.order.totalAmount,
       status: result.order.status,
-      pendingAt: result.order.pendingAt?.toISOString(),
+      pendingAt: result.order.pendingAt?.toISOString() ?? new Date().toISOString(),
     });
   } catch {
     // Socket not initialized; ignore for now.

@@ -9,7 +9,7 @@
   DataType,
 } from 'sequelize-typescript';
 
-export abstract class BaseModel<TModelAttributes, TCreationAttributes>
+export abstract class BaseModel<TModelAttributes extends {}, TCreationAttributes extends {}>
   extends Model<TModelAttributes, TCreationAttributes>
 {
   @PrimaryKey

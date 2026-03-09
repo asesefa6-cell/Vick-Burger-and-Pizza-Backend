@@ -54,7 +54,7 @@ export const deleteMenuItemHandler = async (req: Request, res: Response, next: N
 
 export const getMenuItemsByBusinessHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const businessId = req.params.businessId;
+    const businessId = Array.isArray(req.params.businessId) ? req.params.businessId[0] : req.params.businessId;
     if (!businessId) {
       res.status(400).json({ success: false, message: 'Invalid business id' });
       return;

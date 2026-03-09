@@ -45,5 +45,6 @@
     "skipLibCheck": true,
   }
   ,
+  "include": ["src"],
   "exclude": ["tests", "**/*.test.ts"]
 }

@@ -6,7 +6,7 @@ export const createMenuItem = async (payload: MenuItemCreationAttributes): Promi
 };
 
 export const updateMenuItem = async (
-  id: number,
+  id: string,
   updates: Partial<MenuItemAttributes>
 ): Promise<MenuItem | null> => {
   const item = await models.MenuItem.findByPk(id);
@@ -14,11 +14,11 @@ export const updateMenuItem = async (
   return await item.update(updates);
 };
 
-export const deleteMenuItem = async (id: number): Promise<boolean> => {
+export const deleteMenuItem = async (id: string): Promise<boolean> => {
   const deletedCount = await models.MenuItem.destroy({ where: { id } });
   return deletedCount > 0;
 };
 
-export const findMenuItemsByBusiness = async (businessId: number): Promise<MenuItem[]> => {
+export const findMenuItemsByBusiness = async (businessId: string): Promise<MenuItem[]> => {
   return await models.MenuItem.findAll({ where: { businessId } });
 };

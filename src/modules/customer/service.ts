@@ -1,5 +1,5 @@
 ﻿import { models } from '../../db';
-import { placeOrder } from '../order/service';
+import { placeOrder, processPayment } from '../order/service';
 import { PaymentInput, PlaceOrderInput } from '../order/types';
 import { setTableStatus } from '../_shared/tableStatus';
 import { getSocket } from '../../realtime/socket';
@@ -25,6 +25,8 @@ export interface MenuItemDto {
   price: string;
   imageUrl?: string | null;
   availabilityStatus: boolean;
+  itemType?: string | null;
+  directToWaiter?: boolean;
   categoryId: string;
   categoryName: string;
 }
@@ -241,10 +243,11 @@ export const verifyChapaPayment = async (orderId: string, txRef: string) => {
 
   const payment = await models.Payment.findOne({ where: { orderId: order.id, transactionReference: txRef } });
   if (payment) {
-    await payment.update({
+    const updatePayload: { paymentStatus: string; paymentDate?: Date | null } = {
       paymentStatus: isPaid ? 'Paid' : 'Failed',
-      paymentDate: isPaid ? new Date() : payment.paymentDate,
-    });
+    };
+    if (isPaid) updatePayload.paymentDate = new Date();
+    await payment.update(updatePayload);
   }
 
   if (isPaid) {

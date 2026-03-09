@@ -17,7 +17,12 @@ export const getTableByQrHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const table = await getTableByQrCode(req.params.code);
+    const code = Array.isArray(req.params.code) ? req.params.code[0] : req.params.code;
+    if (!code) {
+      res.status(400).json({ success: false, message: 'Invalid QR code' });
+      return;
+    }
+    const table = await getTableByQrCode(code);
     if (!table) {
       res.status(404).json({ success: false, message: 'Table not found' });
       return;
@@ -38,7 +43,7 @@ export const getMenuForTableHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const tableId = req.params.tableId;
+    const tableId = Array.isArray(req.params.tableId) ? req.params.tableId[0] : req.params.tableId;
     if (!tableId) {
       res.status(400).json({ success: false, message: 'Invalid table id' });
       return;
@@ -113,7 +118,7 @@ export const getPaymentMethodsForTableHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const tableId = req.params.tableId;
+    const tableId = Array.isArray(req.params.tableId) ? req.params.tableId[0] : req.params.tableId;
     if (!tableId) {
       res.status(400).json({ success: false, message: 'Invalid table id' });
       return;
@@ -163,7 +168,8 @@ export const verifyChapaPaymentHandler = async (
       res.status(400).json({ success: false, message: 'Invalid order id' });
       return;
     }
-    const txRef = req.query.tx_ref as string | undefined;
+    const txRefParam = req.query.tx_ref;
+    const txRef = Array.isArray(txRefParam) ? txRefParam[0] : txRefParam;
     if (!txRef) {
       res.status(400).json({ success: false, message: 'Invalid tx_ref' });
       return;
@@ -189,7 +195,7 @@ export const submitCustomerRatingHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const tableId = req.params.tableId;
+    const tableId = Array.isArray(req.params.tableId) ? req.params.tableId[0] : req.params.tableId;
     if (!tableId) {
       res.status(400).json({ success: false, message: 'Invalid table id' });
       return;

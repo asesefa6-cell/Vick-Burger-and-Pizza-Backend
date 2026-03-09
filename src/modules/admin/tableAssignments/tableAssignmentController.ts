@@ -37,7 +37,7 @@ export const unassignTableHandler = async (req: Request, res: Response, next: Ne
       res.status(400).json({ success: false, message: 'Business not assigned' });
       return;
     }
-    const tableId = req.params.tableId;
+    const tableId = Array.isArray(req.params.tableId) ? req.params.tableId[0] : req.params.tableId;
     if (!tableId) {
       res.status(400).json({ success: false, message: 'Invalid table id' });
       return;

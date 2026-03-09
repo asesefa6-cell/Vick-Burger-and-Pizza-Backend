@@ -22,8 +22,12 @@ export const authenticate = (
       return;
     }
 
-    const token = authHeader.split(' ')[1];
-    const payload = jwt.verify(token, getJwtSecret()) as JwtPayload;
+    const token = authHeader.slice(7).trim();
+    if (!token) {
+      res.status(401).json({ success: false, message: 'Authorization token missing' });
+      return;
+    }
+    const payload = jwt.verify(token, getJwtSecret()) as unknown as JwtPayload;
 
     req.user = payload;
     next();

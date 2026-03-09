@@ -26,7 +26,7 @@ export const openapiSpec: OpenAPIV3.Document = {
         bearerFormat: 'JWT',
       },
     },
-    schemas,
+    schemas: schemas || {},
   },
   tags: [
     { name: 'Auth' },
