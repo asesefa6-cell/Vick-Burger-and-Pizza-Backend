@@ -56,7 +56,6 @@ export const sequelize = process.env.DATABASE_URL
       logging: false,
       models: modelList,
     });
-
 export const models = {
   Role,
   User,
