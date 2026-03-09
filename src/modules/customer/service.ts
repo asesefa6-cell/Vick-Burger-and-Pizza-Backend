@@ -180,15 +180,18 @@ const getChapaMethodForOrder = async (orderId: string) => {
 
 export const initChapaPayment = async (orderId: string, returnUrl?: string) => {
   const { order, method } = await getChapaMethodForOrder(orderId);
-  const txRef = `order_${order.id}_${Date.now()}`;
+  const shortId = String(order.id).replace(/-/g, '').slice(0, 20);
+  const shortTs = String(Date.now()).slice(-10);
+  const txRef = `o_${shortId}_${shortTs}`.slice(0, 50);
   const payload = {
     amount: order.totalAmount,
     currency: 'ETB',
-    email: `guest+${order.tableId}@example.com`,
+    email: 'abebech_bekele@gmail.com',
     first_name: 'Guest',
-    last_name: 'Customer',
+    last_name: 'User',
+    phone_number: '0912345678',
     tx_ref: txRef,
-    return_url: returnUrl,
+    ...(returnUrl ? { return_url: returnUrl } : {}),
   };
 
   const res = await fetch('https://api.chapa.co/v1/transaction/initialize', {
@@ -201,7 +204,8 @@ export const initChapaPayment = async (orderId: string, returnUrl?: string) => {
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(data?.message || 'Chapa init failed');
+    const msg = typeof data?.message === 'string' ? data.message : JSON.stringify(data);
+    throw new Error(msg || 'Chapa init failed');
   }
 
   await models.Payment.create({
@@ -228,7 +232,8 @@ export const verifyChapaPayment = async (orderId: string, txRef: string) => {
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(data?.message || 'Chapa verify failed');
+    const msg = typeof data?.message === 'string' ? data.message : JSON.stringify(data);
+    throw new Error(msg || 'Chapa verify failed');
   }
 
   const status = data?.status || data?.data?.status;

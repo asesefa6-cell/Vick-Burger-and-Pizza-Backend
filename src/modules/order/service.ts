@@ -114,14 +114,17 @@ const statusTimestampPatch = (status: OrderStatus): Partial<OrderAttributes> => 
 
 export const updateOrderStatus = async (
   orderId: string,
-  input: UpdateOrderStatusInput
+  input: UpdateOrderStatusInput,
+  options?: { force?: boolean }
 ): Promise<Order | null> => {
   const order = await models.Order.findByPk(orderId, { include: [{ model: models.Table, as: 'table' }, { model: models.Payment }] });
   if (!order) return null;
 
-  const allowedNext = VALID_STATUS_FLOW[order.status as OrderStatus] || [];
-  if (!allowedNext.includes(input.status)) {
-    throw new Error('Invalid status transition');
+  if (!options?.force) {
+    const allowedNext = VALID_STATUS_FLOW[order.status as OrderStatus] || [];
+    if (!allowedNext.includes(input.status)) {
+      throw new Error('Invalid status transition');
+    }
   }
 
   const updated = await order.update({
@@ -276,6 +279,11 @@ export const confirmManualPayment = async (
           paymentDate: payment.paymentDate?.toISOString() || new Date().toISOString(),
         });
       }
+      io.to(`staff:${order.table.businessId}`).emit('TableStatusUpdated', {
+        tableId: order.tableId,
+        businessId: order.table.businessId,
+        status: input.status === 'Paid' ? (order.status === 'Delivered' ? 'enjoying' : 'paid') : 'unpaid',
+      });
     } catch {
       // ignore
     }

@@ -63,7 +63,8 @@ export const updateOrderStatusHandler = async (
       return;
     }
 
-    const order = await updateOrderStatus(id, req.body);
+    const isWaiterDeliver = req.user?.role === 'Waiter' && req.body?.status === 'Delivered';
+    const order = await updateOrderStatus(id, req.body, isWaiterDeliver ? { force: true } : undefined);
     if (!order) {
       res.status(404).json({ success: false, message: 'Order not found' });
       return;
