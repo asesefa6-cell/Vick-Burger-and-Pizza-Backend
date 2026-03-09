@@ -31,6 +31,13 @@ export type TableAssignmentCreationAttributes = Optional<
   tableName: 'table_assignments',
   timestamps: true,
   paranoid: true,
+  indexes: [
+    {
+      name: 'uq_table_assignments_table_id',
+      unique: true,
+      fields: ['table_id'],
+    },
+  ],
 })
 export class TableAssignment extends BaseModel<TableAssignmentAttributes, TableAssignmentCreationAttributes> {
   @PrimaryKey
@@ -39,7 +46,7 @@ export class TableAssignment extends BaseModel<TableAssignmentAttributes, TableA
   declare id: string;
 
   @ForeignKey(() => Table)
-  @Column({ field: 'table_id', type: DataType.UUID, allowNull: false, unique: true })
+  @Column({ field: 'table_id', type: DataType.UUID, allowNull: false })
   declare tableId: string;
 
   @ForeignKey(() => User)

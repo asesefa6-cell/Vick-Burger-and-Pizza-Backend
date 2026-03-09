@@ -6,7 +6,6 @@ import {
   BelongsTo,
   Default,
   PrimaryKey,
-  Index,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { BaseModel } from './BaseModel';
@@ -35,6 +34,10 @@ export type TableRatingCreationAttributes = Optional<
   tableName: 'table_ratings',
   timestamps: true,
   paranoid: true,
+  indexes: [
+    { name: 'idx_table_ratings_waiter', fields: ['waiter_id'] },
+    { name: 'idx_table_ratings_table', fields: ['table_id'] },
+  ],
 })
 export class TableRating extends BaseModel<TableRatingAttributes, TableRatingCreationAttributes> {
   @PrimaryKey
@@ -42,12 +45,10 @@ export class TableRating extends BaseModel<TableRatingAttributes, TableRatingCre
   @Column({ field: 'rating_id', type: DataType.UUID })
   declare id: string;
 
-  @Index('idx_table_ratings_table')
   @ForeignKey(() => Table)
   @Column({ field: 'table_id', type: DataType.UUID, allowNull: false })
   declare tableId: string;
 
-  @Index('idx_table_ratings_waiter')
   @ForeignKey(() => User)
   @Column({ field: 'waiter_id', type: DataType.UUID, allowNull: false })
   declare waiterId: string;
