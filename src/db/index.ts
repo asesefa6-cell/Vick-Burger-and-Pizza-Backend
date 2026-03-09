@@ -33,17 +33,29 @@ const modelList = [
   PaymentMethod,
 ];
 
-export const sequelize = new Sequelize({
-  dialect: dbConfig.dialect,
-  host: dbConfig.host,
-  port: dbConfig.port,
-  database: dbConfig.database,
-  username: dbConfig.username,
-  password: dbConfig.password,
-  logging: false,
-  models: modelList,
-});
-
+export const sequelize = process.env.DATABASE_URL
+  ? new Sequelize(process.env.DATABASE_URL, {
+      dialect: 'postgres',
+      protocol: 'postgres',
+      logging: false,
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      },
+      models: modelList,
+    })
+  : new Sequelize({
+      dialect: dbConfig.dialect,
+      host: dbConfig.host,
+      port: dbConfig.port,
+      database: dbConfig.database,
+      username: dbConfig.username,
+      password: dbConfig.password,
+      logging: false,
+      models: modelList,
+    });
 export const models = {
   Role,
   User,
