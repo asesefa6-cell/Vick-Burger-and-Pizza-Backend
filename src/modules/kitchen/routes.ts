@@ -1,6 +1,6 @@
 ﻿import { Router } from 'express';
 import Joi from 'joi';
-import { getActiveOrdersHandler, updateStatusHandler } from './controller';
+import { getActiveOrdersHandler, kitchenAnalyticsHandler, updateStatusHandler } from './controller';
 import { authenticate } from '../../middlewares/authMiddleware';
 import { authorize } from '../../middlewares/roleMiddleware';
 import { allowAdminChefWaiter } from '../_shared/rbac';
@@ -18,6 +18,7 @@ const statusSchema = Joi.object({
 const idParams = Joi.object({ id: uuid.required() });
 
 router.get('/orders/active', authenticate, authorize(allowAdminChefWaiter), getActiveOrdersHandler);
+router.get('/analytics', authenticate, authorize(allowAdminChefWaiter), kitchenAnalyticsHandler);
 router.patch('/orders/:id/status', authenticate, authorize(allowAdminChefWaiter), validateParams(idParams), validateBody(statusSchema), updateStatusHandler);
 
 export default router;

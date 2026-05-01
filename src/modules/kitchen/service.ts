@@ -65,3 +65,47 @@ export const updateKitchenOrderStatus = async (
 ) => {
   return await updateOrderStatus(orderId, input);
 };
+
+export const getKitchenAnalytics = async (
+  businessId?: string | null,
+  filter: 'today' | 'all_time' = 'today',
+  page = 1,
+  limit = 10
+) => {
+  const where: Record<string, unknown> = {};
+  if (filter === 'today') {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    where.createdAt = { [Op.gte]: start };
+  }
+  const orders = await models.Order.findAll({
+    where,
+    include: [
+      {
+        model: models.Table,
+        as: 'table',
+        attributes: ['businessId', 'tableNumber'],
+        ...(businessId ? { where: { businessId } } : {}),
+      },
+      {
+        model: models.OrderItem,
+        as: 'orderItems',
+        include: [{ model: models.MenuItem, as: 'menuItem' }],
+      },
+    ],
+    attributes: ['id', 'status', 'totalAmount', 'createdAt'],
+  });
+  const completed = orders.filter((o) => String(o.status).toLowerCase() === 'ready' || String(o.status).toLowerCase() === 'delivered');
+  const producedAmount = completed.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+  const allItems = completed.map((o: any) => ({
+    orderId: o.id,
+    tableNumber: o.table?.tableNumber || '—',
+    totalAmount: Number(o.totalAmount || 0),
+    completedAt: o.createdAt,
+    foods: (o.orderItems || []).map((oi: any) => ({ itemName: oi.menuItem?.itemName || 'Item', quantity: oi.quantity })),
+  }));
+  const total = allItems.length;
+  const startIndex = (page - 1) * limit;
+  const paged = allItems.slice(startIndex, startIndex + limit);
+  return { completedOrders: completed.length, producedAmount, completedItems: paged, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
+};

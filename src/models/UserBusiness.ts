@@ -5,6 +5,7 @@ import {
   ForeignKey,
   Default,
   PrimaryKey,
+  BelongsTo,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { BaseModel } from './BaseModel';
@@ -43,4 +44,10 @@ export class UserBusiness extends BaseModel<UserBusinessAttributes, UserBusiness
   @ForeignKey(() => Business)
   @Column({ field: 'business_id', type: DataType.UUID, allowNull: false })
   declare businessId: string;
+
+  @BelongsTo(() => User)
+  declare user?: User;
+
+  @BelongsTo(() => Business)
+  declare business?: Business;
 }

@@ -1,4 +1,4 @@
-﻿import { Transaction } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import { sequelize, models } from '../../db';
 import { Order, OrderAttributes } from './model';
 import { Payment } from '../../models/Payment';
@@ -256,16 +256,25 @@ export const confirmManualPayment = async (
     throw new Error('Order not found');
   }
 
-  const payment = await models.Payment.create({
-    orderId: order.id,
-    paymentMethod: input.paymentMethod || order.paymentMethod || 'Cash',
-    paymentStatus: input.status,
-    transactionReference: null,
-    paymentDate: input.status === 'Paid' ? new Date() : null,
+  const sessionOrders = await models.Order.findAll({
+    where: { tableId: order.tableId, status: { [Op.in]: ['Pending', 'Preparing', 'Ready', 'Delivered'] } },
   });
 
+  const payments = await Promise.all(
+    sessionOrders.map((o) =>
+      models.Payment.create({
+        orderId: o.id,
+        paymentMethod: input.paymentMethod || o.paymentMethod || 'Cash',
+        paymentStatus: input.status,
+        transactionReference: null,
+        paymentDate: input.status === 'Paid' ? new Date() : null,
+      })
+    )
+  );
+
   if (order.table) {
-    await setTableStatus(order.tableId, input.status === 'Paid' ? (order.status === 'Delivered' ? 'enjoying' : 'paid') : 'unpaid');
+    const allDelivered = sessionOrders.every((o) => String(o.status).toLowerCase() === 'delivered');
+    await setTableStatus(order.tableId, input.status === 'Paid' ? (allDelivered ? 'enjoying' : 'paid') : 'unpaid');
     try {
       const io = getSocket();
       if (input.status === 'Paid') {
@@ -273,21 +282,21 @@ export const confirmManualPayment = async (
           orderId: order.id,
           tableId: order.tableId,
           businessId: order.table.businessId,
-          amount: order.totalAmount,
-          paymentId: payment.id,
-          paymentMethod: payment.paymentMethod,
-          paymentDate: payment.paymentDate?.toISOString() || new Date().toISOString(),
+          amount: sessionOrders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0).toFixed(2),
+          paymentId: payments[0]?.id || '',
+          paymentMethod: payments[0]?.paymentMethod || input.paymentMethod || 'Cash',
+          paymentDate: payments[0]?.paymentDate?.toISOString() || new Date().toISOString(),
         });
       }
       io.to(`staff:${order.table.businessId}`).emit('TableStatusUpdated', {
         tableId: order.tableId,
         businessId: order.table.businessId,
-        status: input.status === 'Paid' ? (order.status === 'Delivered' ? 'enjoying' : 'paid') : 'unpaid',
+        status: input.status === 'Paid' ? (allDelivered ? 'enjoying' : 'paid') : 'unpaid',
       });
     } catch {
       // ignore
     }
   }
 
-  return payment;
+  return payments[0]!;
 };

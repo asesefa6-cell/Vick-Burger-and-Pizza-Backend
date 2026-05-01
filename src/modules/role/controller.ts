@@ -7,6 +7,15 @@ import {
   deleteRole,
 } from './service';
 import { parseIdParam } from '../_shared/validation';
+import { RoleName } from '../_shared/rbac';
+
+const visibleRoleMap: Record<RoleName, string[]> = {
+  'Super Admin': ['Super Admin', 'Admin', 'Manager', 'Chef', 'Waiter'],
+  Admin: ['Admin', 'Manager', 'Chef', 'Waiter'],
+  Manager: ['Manager', 'Chef', 'Waiter'],
+  Chef: ['Chef', 'Waiter'],
+  Waiter: ['Waiter'],
+};
 
 export const createHandler = async (
   req: Request,
@@ -22,13 +31,20 @@ export const createHandler = async (
 };
 
 export const getAllHandler = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
     const roles = await findAllRoles();
-    res.status(200).json({ success: true, message: 'Roles fetched', data: roles });
+    const requesterRole = req.user?.role as RoleName | undefined;
+    if (!requesterRole) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+    const visibleRoles = visibleRoleMap[requesterRole] ?? [];
+    const scopedRoles = roles.filter((role) => visibleRoles.includes(role.roleName));
+    res.status(200).json({ success: true, message: 'Roles fetched', data: scopedRoles });
   } catch (error) {
     next(error);
   }

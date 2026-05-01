@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { getAssignedTablesForWaiter, completeTableVisit } from './waiterService';
+import { getAssignedTablesForWaiter, completeTableVisit, getWaiterAnalytics } from './waiterService';
 
 export const getAssignedTablesHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -38,6 +38,23 @@ export const completeTableVisitHandler = async (req: Request, res: Response, nex
       res.status(400).json({ success: false, message: error.message });
       return;
     }
+    next(error);
+  }
+};
+
+export const waiterAnalyticsHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const waiterId = req.user?.userId;
+    if (!waiterId) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+    const filter = req.query.filter === 'all_time' ? 'all_time' : 'today';
+    const page = Math.max(1, Number(req.query.page || 1));
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit || 10)));
+    const data = await getWaiterAnalytics(waiterId, filter, page, limit);
+    res.status(200).json({ success: true, message: 'Waiter analytics fetched', data });
+  } catch (error) {
     next(error);
   }
 };

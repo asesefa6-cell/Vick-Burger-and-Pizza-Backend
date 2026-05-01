@@ -81,6 +81,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 app.get('/docs.json', (_req, res) => res.json(openapiSpec));

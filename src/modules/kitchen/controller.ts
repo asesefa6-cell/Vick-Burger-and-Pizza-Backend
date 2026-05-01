@@ -1,5 +1,5 @@
 ﻿import { Request, Response, NextFunction } from 'express';
-import { getActiveOrders, updateKitchenOrderStatus } from './service';
+import { getActiveOrders, updateKitchenOrderStatus, getKitchenAnalytics } from './service';
 import { ActiveOrdersQuery } from './types';
 import { parseIdParam } from '../_shared/validation';
 
@@ -56,6 +56,24 @@ export const updateStatusHandler = async (
       res.status(400).json({ success: false, message: error.message });
       return;
     }
+    next(error);
+  }
+};
+
+export const kitchenAnalyticsHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const role = req.user?.role;
+    const businessId = role === 'Super Admin' ? undefined : req.user?.businessId;
+    const filter = req.query.filter === 'all_time' ? 'all_time' : 'today';
+    const page = Math.max(1, Number(req.query.page || 1));
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit || 10)));
+    const data = await getKitchenAnalytics(businessId, filter, page, limit);
+    res.status(200).json({ success: true, message: 'Kitchen analytics fetched', data });
+  } catch (error) {
     next(error);
   }
 };

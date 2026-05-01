@@ -10,7 +10,7 @@ import {
 import { validateBody, validateParams } from '../_shared/validation';
 import { authenticate } from '../../middlewares/authMiddleware';
 import { authorize } from '../../middlewares/roleMiddleware';
-import { allowAdminAndSuperAdmin } from '../_shared/rbac';
+import { allowAdminAndSuperAdmin, allowAllStaff } from '../_shared/rbac';
 
 // Example usage: app.use('/api/roles', roleRoutes);
 
@@ -26,7 +26,7 @@ const updateSchema = createSchema.fork(Object.keys(createSchema.describe().keys)
 const idParams = Joi.object({ id: uuid.required() });
 
 router.post('/', authenticate, authorize(allowAdminAndSuperAdmin), validateBody(createSchema), createHandler);
-router.get('/', authenticate, authorize(allowAdminAndSuperAdmin), getAllHandler);
+router.get('/', authenticate, authorize(allowAllStaff), getAllHandler);
 router.get('/:id', authenticate, authorize(allowAdminAndSuperAdmin), validateParams(idParams), getByIdHandler);
 router.put('/:id', authenticate, authorize(allowAdminAndSuperAdmin), validateParams(idParams), validateBody(updateSchema), updateHandler);
 router.delete('/:id', authenticate, authorize(allowAdminAndSuperAdmin), validateParams(idParams), deleteHandler);

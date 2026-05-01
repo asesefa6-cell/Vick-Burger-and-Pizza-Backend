@@ -33,18 +33,24 @@ const modelList = [
   PaymentMethod,
 ];
 
-export const sequelize = process.env.DATABASE_URL
-  ? new Sequelize(process.env.DATABASE_URL, {
+const externalDbEnabled = dbConfig.mode === 'external' || Boolean(dbConfig.url);
+
+export const sequelize = externalDbEnabled
+  ? new Sequelize(dbConfig.url as string, {
       dialect: 'postgres',
       protocol: 'postgres',
       logging: false,
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
-        },
-      },
       models: modelList,
+      ...(dbConfig.ssl
+        ? {
+            dialectOptions: {
+              ssl: {
+                require: true,
+                rejectUnauthorized: dbConfig.sslRejectUnauthorized,
+              },
+            },
+          }
+        : {}),
     })
   : new Sequelize({
       dialect: dbConfig.dialect,
