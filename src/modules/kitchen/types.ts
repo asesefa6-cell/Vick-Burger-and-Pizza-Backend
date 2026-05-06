@@ -1,4 +1,4 @@
-﻿import { OrderStatus } from '../order/types';
+﻿import { OrderStatus } from "../order/types";
 
 export interface ActiveOrderItem {
   itemId: string;
@@ -20,6 +20,9 @@ export interface ActiveOrder {
 
 export interface ActiveOrdersQuery {
   tableId?: string;
+  page?: number;
+  limit?: number;
+  status?: OrderStatus;
 }
 
 export interface UpdateStatusInput {

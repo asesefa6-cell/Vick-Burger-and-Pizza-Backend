@@ -1,8 +1,8 @@
-﻿import { models } from '../../db';
-import { placeOrder, processPayment } from '../order/service';
-import { PaymentInput, PlaceOrderInput } from '../order/types';
-import { setTableStatus } from '../_shared/tableStatus';
-import { getSocket } from '../../realtime/socket';
+﻿import { models } from "../../db";
+import { placeOrder, processPayment } from "../order/service";
+import { PaymentInput, PlaceOrderInput } from "../order/types";
+import { setTableStatus } from "../_shared/tableStatus";
+import { getSocket } from "../../realtime/socket";
 
 export interface CustomerTableInfo {
   tableId: string;
@@ -51,13 +51,18 @@ export interface PaymentMethodDto {
   type: string;
 }
 
-export const getTableByQrCode = async (qrCode: string): Promise<CustomerTableInfo | null> => {
+export const getTableByQrCode = async (
+  qrCode: string,
+): Promise<CustomerTableInfo | null> => {
   const table = await models.Table.findOne({
     where: { qrCode },
-    include: [{ model: models.Business, as: 'business' }],
+    include: [{ model: models.Business, as: "business" }],
   });
 
   if (!table) return null;
+  if (table.business && !table.business.isActive) {
+    throw new Error("Establishment is currently disabled");
+  }
 
   return {
     tableId: table.id,
@@ -66,17 +71,19 @@ export const getTableByQrCode = async (qrCode: string): Promise<CustomerTableInf
     isActive: table.isActive,
     isAvailable: table.isAvailable,
     business: {
-      businessId: table.business?.id || '',
-      businessName: table.business?.businessName || '',
-      address: table.business?.address || '',
-      phone: table.business?.phone || '',
+      businessId: table.business?.id || "",
+      businessName: table.business?.businessName || "",
+      address: table.business?.address || "",
+      phone: table.business?.phone || "",
     },
   };
 };
 
-export const getMenuForTable = async (tableId: string): Promise<MenuResponse | null> => {
+export const getMenuForTable = async (
+  tableId: string,
+): Promise<MenuResponse | null> => {
   const table = await models.Table.findByPk(tableId, {
-    include: [{ model: models.Business, as: 'business' }],
+    include: [{ model: models.Business, as: "business" }],
   });
 
   if (!table) return null;
@@ -86,37 +93,37 @@ export const getMenuForTable = async (tableId: string): Promise<MenuResponse | n
     include: [
       {
         model: models.MenuItem,
-        as: 'menuItems',
+        as: "menuItems",
         where: { businessId: table.businessId },
         required: false,
       },
     ],
-    order: [['categoryName', 'ASC']],
+    order: [["categoryName", "ASC"]],
   });
 
   return {
     businessId: table.businessId,
-    businessName: table.business?.businessName || '',
+    businessName: table.business?.businessName || "",
     tableId: table.id,
     tableNumber: table.tableNumber,
     qrCode: table.qrCode,
     categories: categories.map((category) => ({
       categoryId: category.id,
-        categoryName: category.categoryName,
-        description: category.description ?? null,
-        items:
-          category.menuItems?.map((item) => ({
-            itemId: item.id,
-            itemName: item.itemName,
-            description: item.description ?? null,
-            price: item.price,
-            imageUrl: item.imageUrl ?? null,
-            availabilityStatus: item.availabilityStatus,
-            itemType: item.itemType ?? null,
-            directToWaiter: item.directToWaiter,
-            categoryId: category.id,
-            categoryName: category.categoryName,
-          })) || [],
+      categoryName: category.categoryName,
+      description: category.description ?? null,
+      items:
+        category.menuItems?.map((item) => ({
+          itemId: item.id,
+          itemName: item.itemName,
+          description: item.description ?? null,
+          price: item.price,
+          imageUrl: item.imageUrl ?? null,
+          availabilityStatus: item.availabilityStatus,
+          itemType: item.itemType ?? null,
+          directToWaiter: item.directToWaiter,
+          categoryId: category.id,
+          categoryName: category.categoryName,
+        })) || [],
     })),
   };
 };
@@ -124,32 +131,37 @@ export const getMenuForTable = async (tableId: string): Promise<MenuResponse | n
 export const placeCustomerOrder = async (payload: PlaceOrderInput) => {
   const table = await models.Table.findByPk(payload.tableId);
   if (!table) {
-    throw new Error('Invalid table');
+    throw new Error("Invalid table");
   }
   return await placeOrder(payload);
 };
 
-export const processCustomerPayment = async (orderId: string, input: PaymentInput) => {
+export const processCustomerPayment = async (
+  orderId: string,
+  input: PaymentInput,
+) => {
   return await processPayment(orderId, input);
 };
 
-export const getPaymentMethodsForTable = async (tableId: string): Promise<PaymentMethodDto[]> => {
+export const getPaymentMethodsForTable = async (
+  tableId: string,
+): Promise<PaymentMethodDto[]> => {
   const table = await models.Table.findByPk(tableId);
   if (!table) return [];
   let rows = await models.PaymentMethod.findAll({
     where: { businessId: table.businessId, isActive: true },
-    order: [['createdAt', 'ASC']],
+    order: [["createdAt", "ASC"]],
   });
   if (rows.length === 0) {
     await models.PaymentMethod.create({
       businessId: table.businessId,
-      name: 'Cash',
-      type: 'manual',
+      name: "Cash",
+      type: "manual",
       isActive: true,
     });
     rows = await models.PaymentMethod.findAll({
       where: { businessId: table.businessId, isActive: true },
-      order: [['createdAt', 'ASC']],
+      order: [["createdAt", "ASC"]],
     });
   }
   return rows.map((r) => ({ id: r.id, name: r.name, type: r.type }));
@@ -157,9 +169,11 @@ export const getPaymentMethodsForTable = async (tableId: string): Promise<Paymen
 
 export const submitCustomerRating = async (tableId: string, rating: number) => {
   const table = await models.Table.findByPk(tableId);
-  if (!table) throw new Error('Invalid table');
-  const assignment = await models.TableAssignment.findOne({ where: { tableId } });
-  if (!assignment) throw new Error('No waiter assigned');
+  if (!table) throw new Error("Invalid table");
+  const assignment = await models.TableAssignment.findOne({
+    where: { tableId },
+  });
+  if (!assignment) throw new Error("No waiter assigned");
   await models.TableRating.create({
     tableId,
     waiterId: assignment.waiterId,
@@ -171,49 +185,55 @@ export const submitCustomerRating = async (tableId: string, rating: number) => {
 };
 
 const getChapaMethodForOrder = async (orderId: string) => {
-  const order = await models.Order.findByPk(orderId, { include: [{ model: models.Table, as: 'table' }] });
-  if (!order) throw new Error('Order not found');
+  const order = await models.Order.findByPk(orderId, {
+    include: [{ model: models.Table, as: "table" }],
+  });
+  if (!order) throw new Error("Order not found");
   const businessId = order.table?.businessId;
-  if (!businessId) throw new Error('Order not found');
-  const method = await models.PaymentMethod.findOne({ where: { businessId, type: 'chapa', isActive: true } });
-  if (!method || !method.chapaSecretKey) throw new Error('Chapa not configured');
+  if (!businessId) throw new Error("Order not found");
+  const method = await models.PaymentMethod.findOne({
+    where: { businessId, type: "chapa", isActive: true },
+  });
+  if (!method || !method.chapaSecretKey)
+    throw new Error("Chapa not configured");
   return { order, method };
 };
 
 export const initChapaPayment = async (orderId: string, returnUrl?: string) => {
   const { order, method } = await getChapaMethodForOrder(orderId);
-  const shortId = String(order.id).replace(/-/g, '').slice(0, 20);
+  const shortId = String(order.id).replace(/-/g, "").slice(0, 20);
   const shortTs = String(Date.now()).slice(-10);
   const txRef = `o_${shortId}_${shortTs}`.slice(0, 50);
   const payload = {
     amount: order.totalAmount,
-    currency: 'ETB',
-    email: 'abebech_bekele@gmail.com',
-    first_name: 'Guest',
-    last_name: 'User',
-    phone_number: '0912345678',
+    currency: "ETB",
+    email: "abebech_bekele@gmail.com",
+    first_name: "Guest",
+    last_name: "User",
+    phone_number: "0912345678",
     tx_ref: txRef,
     ...(returnUrl ? { return_url: returnUrl } : {}),
   };
 
-  const res = await fetch('https://api.chapa.co/v1/transaction/initialize', {
-    method: 'POST',
+  const res = await fetch("https://api.chapa.co/v1/transaction/initialize", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${method.chapaSecretKey}`,
     },
     body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    const msg = typeof data?.message === 'string' ? data.message : JSON.stringify(data);
-    throw new Error(msg || 'Chapa init failed');
+    const msg =
+      typeof data?.message === "string" ? data.message : JSON.stringify(data);
+    throw new Error(msg || "Chapa init failed");
   }
 
   await models.Payment.create({
     orderId: order.id,
-    paymentMethod: 'Chapa',
-    paymentStatus: 'Pending',
+    paymentMethod: "Chapa",
+    paymentStatus: "Pending",
     transactionReference: txRef,
     paymentDate: null,
   });
@@ -226,26 +246,33 @@ export const initChapaPayment = async (orderId: string, returnUrl?: string) => {
 
 export const verifyChapaPayment = async (orderId: string, txRef: string) => {
   const { order, method } = await getChapaMethodForOrder(orderId);
-  const res = await fetch(`https://api.chapa.co/v1/transaction/verify/${txRef}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${method.chapaSecretKey}`,
+  const res = await fetch(
+    `https://api.chapa.co/v1/transaction/verify/${txRef}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${method.chapaSecretKey}`,
+      },
     },
-  });
+  );
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    const msg = typeof data?.message === 'string' ? data.message : JSON.stringify(data);
-    throw new Error(msg || 'Chapa verify failed');
+    const msg =
+      typeof data?.message === "string" ? data.message : JSON.stringify(data);
+    throw new Error(msg || "Chapa verify failed");
   }
 
   const status = data?.status || data?.data?.status;
-  const isPaid = String(status).toLowerCase() === 'success';
+  const isPaid = String(status).toLowerCase() === "success";
 
-  const payment = await models.Payment.findOne({ where: { orderId: order.id, transactionReference: txRef } });
+  const payment = await models.Payment.findOne({
+    where: { orderId: order.id, transactionReference: txRef },
+  });
   if (payment) {
-    const updatePayload: { paymentStatus: string; paymentDate?: Date | null } = {
-      paymentStatus: isPaid ? 'Paid' : 'Failed',
-    };
+    const updatePayload: { paymentStatus: string; paymentDate?: Date | null } =
+      {
+        paymentStatus: isPaid ? "Paid" : "Failed",
+      };
     if (isPaid) updatePayload.paymentDate = new Date();
     await payment.update(updatePayload);
   }
@@ -253,16 +280,19 @@ export const verifyChapaPayment = async (orderId: string, txRef: string) => {
   if (isPaid) {
     const table = await models.Table.findByPk(order.tableId);
     if (table) {
-      await setTableStatus(order.tableId, order.status === 'Delivered' ? 'enjoying' : 'paid');
+      await setTableStatus(
+        order.tableId,
+        order.status === "Delivered" ? "enjoying" : "paid",
+      );
       try {
         const io = getSocket();
-        io.to(`admin:${table.businessId}`).emit('PaymentCompleted', {
+        io.to(`admin:${table.businessId}`).emit("PaymentCompleted", {
           orderId: order.id,
           tableId: order.tableId,
           businessId: table.businessId,
           amount: order.totalAmount,
-          paymentId: payment?.id || '',
-          paymentMethod: 'Chapa',
+          paymentId: payment?.id || "",
+          paymentMethod: "Chapa",
           paymentDate: new Date().toISOString(),
         });
       } catch {

@@ -44,6 +44,7 @@ const businessSchema = Joi.object({
   logoFileId: uuid.optional(),
   chapaSecretKey: Joi.string().min(1).optional(),
   chapaPublicKey: Joi.string().min(1).optional(),
+  isActive: Joi.boolean().optional(),
 });
 
 const idParams = Joi.object({ id: uuid.required() });

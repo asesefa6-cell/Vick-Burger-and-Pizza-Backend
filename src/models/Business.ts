@@ -8,16 +8,16 @@ import {
   Default,
   PrimaryKey,
   ForeignKey,
-} from 'sequelize-typescript';
-import { Optional } from 'sequelize';
-import { BaseModel } from './BaseModel';
-import { Table as RestaurantTable } from './Table';
-import { Category } from './Category';
-import { MenuItem } from './MenuItem';
-import { User } from './User';
-import { UserBusiness } from './UserBusiness';
-import { File } from './File';
-import { PaymentMethod } from './PaymentMethod';
+} from "sequelize-typescript";
+import { Optional } from "sequelize";
+import { BaseModel } from "./BaseModel";
+import { Table as RestaurantTable } from "./Table";
+import { Category } from "./Category";
+import { MenuItem } from "./MenuItem";
+import { User } from "./User";
+import { UserBusiness } from "./UserBusiness";
+import { File } from "./File";
+import { PaymentMethod } from "./PaymentMethod";
 
 export interface BusinessAttributes {
   id: string;
@@ -32,21 +32,24 @@ export interface BusinessAttributes {
 
 export type BusinessCreationAttributes = Optional<
   BusinessAttributes,
-  'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
+  "id" | "createdAt" | "updatedAt" | "deletedAt"
 >;
 
 @Table({
-  tableName: 'businesses',
+  tableName: "businesses",
   timestamps: true,
   paranoid: true,
 })
-export class Business extends BaseModel<BusinessAttributes, BusinessCreationAttributes> {
+export class Business extends BaseModel<
+  BusinessAttributes,
+  BusinessCreationAttributes
+> {
   @PrimaryKey
   @Default(DataType.UUIDV4)
-  @Column({ field: 'business_id', type: DataType.UUID })
+  @Column({ field: "business_id", type: DataType.UUID })
   declare id: string;
 
-  @Column({ field: 'business_name', type: DataType.STRING, allowNull: false })
+  @Column({ field: "business_name", type: DataType.STRING, allowNull: false })
   declare businessName: string;
 
   @Column({ type: DataType.STRING, allowNull: false })
@@ -55,11 +58,15 @@ export class Business extends BaseModel<BusinessAttributes, BusinessCreationAttr
   @Column({ type: DataType.STRING, allowNull: false })
   declare phone: string;
 
+  @Default(true)
+  @Column({ field: "is_active", type: DataType.BOOLEAN, allowNull: false })
+  declare isActive: boolean;
+
   @ForeignKey(() => File)
-  @Column({ field: 'logo_file_id', type: DataType.UUID, allowNull: true })
+  @Column({ field: "logo_file_id", type: DataType.UUID, allowNull: true })
   declare logoFileId?: string | null;
 
-  @BelongsTo(() => File, { as: 'logoFile' })
+  @BelongsTo(() => File, { as: "logoFile" })
   declare logoFile?: File;
 
   @HasMany(() => RestaurantTable)

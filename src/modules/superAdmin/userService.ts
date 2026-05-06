@@ -18,13 +18,22 @@ export const createUser = async (payload: {
   }
 
   const passwordHash = await bcrypt.hash(payload.password, 12);
-  return await models.User.create({
+  const user = await models.User.create({
     name: payload.name,
     email: payload.email,
     passwordHash,
     roleId: payload.roleId,
     businessId: payload.businessId ?? null,
   });
+
+  if (payload.businessId) {
+    await models.UserBusiness.create({
+      userId: user.id,
+      businessId: payload.businessId,
+    });
+  }
+
+  return user;
 };
 
 export const listUsers = async (): Promise<User[]> => {
